@@ -1,37 +1,71 @@
 <template>
     <div class="app">
-        <form>
-            <H4>Создание поста</H4>
-            <input v-bind:value="title" class="input" type="text" placeholder="название">
-            <input v-bind:value="body" class="input" type="text" placeholder="описание">
-            <button class="btn" @click="createPost">Создать</button>
-        </form>
-        <div>
-            <div class="post" v-for="post in posts">
-                <div><strong>Название:</strong> {{ post.title }}</div>
-                <div><strong>Название:</strong> {{ post.body }}</div>
-            </div>
-        </div>
+        <h1>Страница с постами</h1>
+        <input type="text" v-model.trim="modificatorValue">
+        <my-button @click="fetchPost">Получить посты</my-button>
+        <my-button
+               @click="showDialog"
+               style="margin: 15px 0;"
+        >
+            Создать пост
+        </my-button>
+        <my-dialog v-model:show="dialogVisible">
+            <post-form
+                    @create="createPost"
+            />
+        </my-dialog>
+        <post-list
+                :posts="posts"
+                @remove="removePost"
+        />
     </div>
 
 </template>
 
 <script>
+    import PostForm from "@/components/PostForm";
+    import PostList from "@/components/PostList"
+    import MyDialog from "@/components/UI/MyDialog";
+    import axios from "axios"
+    import MyButton from "@/components/UI/MyButton";
+
     export default {
+        components: {
+            MyButton,
+            MyDialog,
+            PostForm, PostList
+        },
         data() {
             return {
                 posts: [
                     {id: 1, title: 'JavaScript1', body: 'Орисание поста1'},
                     {id: 2, title: 'JavaScript2', body: 'Орисание поста2'},
-                    {id: 3, title: 'JavaScript3', body: 'Орисание поста3'}
+                    {id: 3, title: 'JavaScript3', body: 'Орисание поста3'},
+                    {id: 4, title: 'JavaScript4', body: 'Орисание поста4'},
+                    {id: 4, title: 'JavaScript5', body: 'Орисание поста5'}
                 ],
-                title: '',
-                body: ''
+                dialogVisible: false,
+                modificatorValue: ''
             }
         },
         methods: {
-            createPost() {
-
+            createPost(post) {
+                this.posts.push(post);
+                this.dialogVisible = false;
+            },
+            removePost(post) {
+                this.posts = this.posts.filter(p => p.id !== post.id)
+            },
+            showDialog() {
+                this.dialogVisible = true;
+            },
+            async fetchPost() {
+                try {
+                    const response = await axios.get('https://jsonplaceholder.typicode.com/posts?_limit=10');
+                    console.log(response)
+                } catch (e) {
+                   alert('ОШИБКА')
+                }
             }
         }
     }
@@ -46,32 +80,5 @@
 
     .app {
         padding: 20px;
-    }
-
-    .post {
-        padding: 15px;
-        border: 10px solid teal;
-        margin-top: 15px;
-    }
-
-    form {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .input {
-        width: 100%;
-        border: 1px solid teal;
-        padding: 10px 15px;
-        margin-top: 15px;
-    }
-
-    .btn {
-        margin-top: 15px;
-        align-self: flex-end;
-        padding: 10px 15px;
-        background: none;
-        color: teal;
-        border: 1px solid teal;
     }
 </style>
