@@ -1,14 +1,18 @@
 <template>
     <div class="app">
         <h1>Страница с постами</h1>
-        <input type="text" v-model.trim="modificatorValue">
-        <my-button @click="fetchPost">Получить посты</my-button>
-        <my-button
-               @click="showDialog"
-               style="margin: 15px 0;"
-        >
-            Создать пост
-        </my-button>
+        <div class="app__btns">
+            <my-button
+                    @click="showDialog"
+            >
+                Создать пост
+            </my-button>
+            <my-select
+
+                    v-model="selectedSort"
+                    :options="sortOptions"
+            />
+        </div>
         <my-dialog v-model:show="dialogVisible">
             <post-form
                     @create="createPost"
@@ -17,7 +21,9 @@
         <post-list
                 :posts="posts"
                 @remove="removePost"
+                v-if="!isPostsLoading"
         />
+        <div v-else>Идёт загрузка...</div>
     </div>
 
 </template>
@@ -28,24 +34,25 @@
     import MyDialog from "@/components/UI/MyDialog";
     import axios from "axios"
     import MyButton from "@/components/UI/MyButton";
+    import MySelect from "@/components/UI/MySelect";
 
     export default {
         components: {
+            MySelect,
             MyButton,
             MyDialog,
             PostForm, PostList
         },
         data() {
             return {
-                posts: [
-                    {id: 1, title: 'JavaScript1', body: 'Орисание поста1'},
-                    {id: 2, title: 'JavaScript2', body: 'Орисание поста2'},
-                    {id: 3, title: 'JavaScript3', body: 'Орисание поста3'},
-                    {id: 4, title: 'JavaScript4', body: 'Орисание поста4'},
-                    {id: 4, title: 'JavaScript5', body: 'Орисание поста5'}
-                ],
+                posts: [],
                 dialogVisible: false,
-                modificatorValue: ''
+                isPostsLoading: false,
+                selectedSort: '',
+                sortOptions: [
+                    {value: 'title', name: 'По названию'},
+                    {value: 'body', name: 'По содержимому'}
+                ]
             }
         },
         methods: {
@@ -59,13 +66,26 @@
             showDialog() {
                 this.dialogVisible = true;
             },
-            async fetchPost() {
+            async fetchPosts() {
                 try {
+                    this.isPostsLoading = true;
                     const response = await axios.get('https://jsonplaceholder.typicode.com/posts?_limit=10');
-                    console.log(response)
+                    this.posts = response.data;
                 } catch (e) {
-                   alert('ОШИБКА')
+                    alert('ОШИБКА')
+                } finally {
+                    this.isPostsLoading = false;
                 }
+            }
+        },
+        mounted() {
+            this.fetchPosts();
+        },
+        watch: {
+            selectedSort(newValue) {
+                this.posts.sort((post1, post2) => {
+                    return post1[newValue]?.localeCompare(post2[newValue])
+                })
             }
         }
     }
@@ -80,5 +100,11 @@
 
     .app {
         padding: 20px;
+    }
+
+    .app__btns {
+        margin: 15px 0;
+        display: flex;
+        justify-content: space-between;
     }
 </style>
